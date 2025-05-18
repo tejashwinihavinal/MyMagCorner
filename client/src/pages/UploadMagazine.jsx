@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 const UploadMagazine = () => {
   const [title, setTitle] = useState('');
@@ -9,6 +10,14 @@ const UploadMagazine = () => {
   const [pdfFile, setPdfFile] = useState(null);
   const [coverImage, setCoverImage] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const navigate = useNavigate();
+
+  // Set loaded state after a small delay to trigger animations
+  useEffect(() => {
+    const timer = setTimeout(() => setLoaded(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -55,6 +64,8 @@ const UploadMagazine = () => {
       setCategories('');
       setPdfFile(null);
       setCoverImage(null);
+
+      navigate('/dashboard');
     } catch (err) {
       alert(err.response?.data?.message || 'Error uploading magazine');
     } finally {
@@ -62,103 +73,234 @@ const UploadMagazine = () => {
     }
   };
 
+  // Text animation variants
+  const letterVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: i => ({
+      opacity: 1,
+      y: 0,
+      transition: {
+        delay: i * 0.05,
+      }
+    })
+  };
+
+  // Split text for letter animation
+  const uploadTitle = "Upload Magazine.";
+  const uploadTitleArray = uploadTitle.split("");
+
   return (
-    <div
-      className="min-h-screen flex items-center justify-center text-white relative"
-      style={{
-        backgroundImage: "url('/src/assets/images/bcphoto5.jpg')",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
-    >
-      {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/30 to-black/50"></div>
+    <div className="min-h-screen flex flex-col items-center justify-center text-white relative overflow-hidden">
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: "url('/src/assets/images/bcphoto5.jpg')",
+        }}
+      ></div>
 
-      {/* Form Container with Animation */}
-      <motion.div
-        className="bg-white/20 backdrop-blur-md text-white p-8 rounded-lg shadow-lg w-96 relative z-10 border border-white/30"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
+      {/* Modern Gradient Overlay with Animation */}
+      <motion.div 
+        className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/40 to-black/60"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.5 }}
       >
-        <motion.h1
-          className="text-3xl font-bold text-center mb-4"
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-        >
-          Upload Magazine
-        </motion.h1>
+        {/* Animated Decorative Elements */}
+        <div className="absolute inset-0 overflow-hidden opacity-30">
+          {[...Array(5)].map((_, index) => (
+            <motion.div
+              key={index}
+              className="absolute rounded-full bg-white/20 backdrop-blur-xl"
+              style={{
+                width: `${Math.random() * 300 + 100}px`,
+                height: `${Math.random() * 300 + 100}px`,
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+              }}
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ 
+                opacity: 0.3, 
+                scale: 1, 
+                x: Math.random() * 40 - 20,
+                y: Math.random() * 40 - 20,
+                transition: { 
+                  duration: 4 + index * 2, 
+                  repeat: Infinity, 
+                  repeatType: "reverse" 
+                }
+              }}
+            />
+          ))}
+        </div>
+      </motion.div>
 
-        <motion.form
-          onSubmit={handleUpload}
-          className="flex flex-col gap-4"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-        >
-          <motion.input
-            type="text"
-            placeholder="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            className="p-3 border rounded bg-white/20 text-white placeholder-gray-300"
-            whileFocus={{ scale: 1.05 }}
-            transition={{ type: 'spring', stiffness: 300 }}
-          />
-          <motion.textarea
-            placeholder="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            required
-            className="p-3 border rounded bg-white/20 text-white placeholder-gray-300"
-            whileFocus={{ scale: 1.05 }}
-            transition={{ type: 'spring', stiffness: 300 }}
-          />
-          <motion.input
-            type="text"
-            placeholder="Categories (comma-separated)"
-            value={categories}
-            onChange={(e) => setCategories(e.target.value)}
-            required
-            className="p-3 border rounded bg-white/20 text-white placeholder-gray-300"
-            whileFocus={{ scale: 1.05 }}
-            transition={{ type: 'spring', stiffness: 300 }}
-          />
-          <div>
-            <label className="block text-gray-300 mb-1">Cover Image</label>
-            <input
-              type="file"
-              onChange={(e) => setCoverImage(e.target.files[0])}
-              required
-              accept=".jpg,.jpeg,.png"
-              className="p-2 border rounded bg-white/20 text-white file:text-white file:bg-green-600 file:border-none"
-            />
-          </div>
-          <div>
-            <label className="block text-gray-300 mb-1">PDF File</label>
-            <input
-              type="file"
-              onChange={(e) => setPdfFile(e.target.files[0])}
-              required
-              accept=".pdf"
-              className="p-2 border rounded bg-white/20 text-white file:text-white file:bg-green-600 file:border-none"
-            />
-          </div>
-          <motion.button
-            type="submit"
-            className={`p-3 rounded text-white font-bold ${
-              loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'
-            }`}
-            disabled={loading}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            transition={{ type: 'spring', stiffness: 300 }}
+      {/* Content */}
+      <AnimatePresence>
+        {loaded && (
+          <motion.div 
+            className="relative z-10 px-6 w-full max-w-md mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8 }}
           >
-            {loading ? 'Uploading...' : 'Upload'}
-          </motion.button>
-        </motion.form>
+            {/* Upload Form Container */}
+            <motion.div
+              className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 shadow-lg overflow-hidden"
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ 
+                type: "spring",
+                stiffness: 100,
+                damping: 15,
+                delay: 0.4
+              }}
+            >
+              {/* Animated Letter-by-Letter Heading */}
+              <div className="text-3xl font-extrabold mb-6 text-center">
+                <div className="overflow-hidden py-2">
+                  <div className="flex justify-center flex-wrap">
+                    {uploadTitleArray.map((letter, index) => (
+                      <motion.span
+                        key={index}
+                        custom={index}
+                        variants={letterVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className={letter === " " ? "mr-2" : letter === "." ? "text-yellow-300 mr-2" : "text-yellow-300"}
+                      >
+                        {letter}
+                      </motion.span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Description */}
+              <motion.p
+                className="text-center text-gray-300 mb-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+              >
+                Share your magazine with our community.
+              </motion.p>
+
+              {/* Form */}
+              <motion.form
+                onSubmit={handleUpload}
+                className="flex flex-col gap-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+              >
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileFocus={{ scale: 1.02 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                >
+                  <input
+                    type="text"
+                    placeholder="Title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                    className="p-4 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-gray-300"
+                  />
+                </motion.div>
+                
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileFocus={{ scale: 1.02 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                >
+                  <textarea
+                    placeholder="Description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    required
+                    className="p-4 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-gray-300 min-h-24"
+                  />
+                </motion.div>
+                
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileFocus={{ scale: 1.02 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                >
+                  <input
+                    type="text"
+                    placeholder="Categories (comma-separated)"
+                    value={categories}
+                    onChange={(e) => setCategories(e.target.value)}
+                    required
+                    className="p-4 rounded-xl w-full focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-gray-300"
+                  />
+                </motion.div>
+                
+                <motion.div
+                  className="space-y-2"
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                >
+                  <label className="block text-gray-300 text-sm ml-1">Cover Image</label>
+                  <div className="relative overflow-hidden rounded-xl bg-white/10 backdrop-blur-md border border-white/20">
+                    <input
+                      type="file"
+                      onChange={(e) => setCoverImage(e.target.files[0])}
+                      required
+                      accept=".jpg,.jpeg,.png"
+                      className="p-3 w-full text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-white file:bg-yellow-500 file:cursor-pointer hover:file:bg-yellow-600"
+                    />
+                  </div>
+                </motion.div>
+                
+                <motion.div
+                  className="space-y-2"
+                  whileHover={{ scale: 1.02 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                >
+                  <label className="block text-gray-300 text-sm ml-1">PDF File</label>
+                  <div className="relative overflow-hidden rounded-xl bg-white/10 backdrop-blur-md border border-white/20">
+                    <input
+                      type="file"
+                      onChange={(e) => setPdfFile(e.target.files[0])}
+                      required
+                      accept=".pdf"
+                      className="p-3 w-full text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-white file:bg-yellow-500 file:cursor-pointer hover:file:bg-yellow-600"
+                    />
+                  </div>
+                </motion.div>
+                
+                <motion.div
+                  className="mt-2"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 300 }}
+                >
+                  <button
+                    type="submit"
+                    className={`w-full p-4 rounded-xl text-white font-medium relative overflow-hidden ${
+                      loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-yellow-400 to-yellow-600 hover:shadow-lg'
+                    }`}
+                    disabled={loading}
+                  >
+                    {loading ? 'Uploading...' : 'Upload Magazine'}
+                  </button>
+                </motion.div>
+              </motion.form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Footer */}
+      <motion.div
+        className="absolute bottom-4 w-full text-center text-sm text-gray-300"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 1.8 }}
+      >
       </motion.div>
     </div>
   );
